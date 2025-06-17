@@ -56,7 +56,7 @@ function Statistik() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
-      <div className="container mx-auto py-12 px-4">
+      <div className="container mx-auto py-12 px-4 w-full max-w-6xl">
         <div className="flex justify-center mb-4">
           <GitGraph className="w-12 h-12 text-blue-600" />
         </div>
