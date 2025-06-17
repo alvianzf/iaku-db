@@ -1,7 +1,7 @@
 import React from "react";
 import { Link } from "react-router-dom";
 import iaku from "../assets/iaku.png";
-import { Shield } from "lucide-react";
+import { Shield, MapPin } from "lucide-react";
 
 const Layout = ({ children }) => {
   return (
@@ -26,19 +26,28 @@ const Layout = ({ children }) => {
               Form Alumni
             </Link>
             <div className="inline-flex items-center">
-              <Link to="/auth" className="bg-blue-600 text-white px-3 py-2 rounded hover:bg-blue-700 transition-colors duration-200">
+              <Link
+                to="/auth"
+                className="bg-blue-600 text-white px-3 py-2 rounded hover:bg-blue-700 transition-colors duration-200"
+              >
                 <Shield size={24} />
               </Link>
             </div>
           </div>
         </div>
       </nav>
-
       <main className="flex-grow container mx-auto px-4 py-6">{children}</main>
-
       <footer className="text-center text-gray-500 text-sm py-6">
-        &copy; {new Date().getFullYear()} Database Alumni Kimia Unpad. All
-        rights reserved.
+        <div className="mb-2">
+          &copy; {new Date().getFullYear()} Database Alumni Kimia Unpad. All
+          rights reserved.
+        </div>
+        <div className="flex justify-center items-start gap-2 mt-2 text-left text-gray-500 text-sm">
+          <MapPin size={16} className="mt-0.5" />
+          <div>
+            Komplek Pondok Mas Indah, Jl. Pondok Mas 1 No 11, Kelurahan Leuwigajah, Kecamatan Cimahi Selatan, Kota Cimahi
+          </div>
+        </div>
       </footer>
     </div>
   );
