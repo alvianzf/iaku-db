@@ -76,19 +76,9 @@ function App() {
               <ChevronLeft size={20} />
             </button>
 
-            {Array.from({ length: totalPages }, (_, i) => (
-              <button
-                key={i}
-                onClick={() => onSearch(query, i + 1)}
-                className={`px-4 py-2 rounded-lg ${
-                  page === i + 1
-                    ? "bg-blue-600 text-white"
-                    : "bg-gray-200 text-gray-700 hover:bg-blue-500 hover:text-white"
-                } transition-colors duration-200`}
-              >
-                {i + 1}
-              </button>
-            ))}
+            <span className="flex items-center text-gray-600">
+              Halaman {page} dari {totalPages}
+            </span>
 
             <button
               onClick={() => onSearch(query, page + 1)}
