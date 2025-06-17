@@ -28,7 +28,13 @@ function App() {
       <div className="container mx-auto py-12">
         <SearchHeader query={query} onSearch={onSearch} isLoading={loading} />
       </div>
-      <div className="mt-8 flex flex-row flex-wrap px-4 gap-4 justify-center">
+      {results.length > 0 && (
+        <h3 className="text-gray-600 text-center mb-6">
+        Menampilkan <strong>{results.length}</strong> hasil untuk <strong>"{query}"</strong>
+        </h3>
+      )}
+      <div className="mt-8 flex flex-column flex-wrap px-4 gap-4 justify-center">
+      
         {results.length > 0 ? (
           results.map((result, index) => (
             <ResultCard
