@@ -37,15 +37,27 @@ export const searchAlumni = async (text) => {
   return combined;
 };
 
+let cachedTotal = null;
+let cacheExpiry = null;
+
 export const getTotalAlumni = async () => {
-    let { count, error } = await supabase
-        .from('alumni_data')
-        .select('*', { count: 'exact', head: true });
+  const now = Date.now();
 
-    if (error) {
-        console.error('🔥 Error getting total alumni:', error);
-        return 0;
-    }
+  if (cachedTotal !== null && cacheExpiry > now) {
+    return cachedTotal;
+  }
 
-    return count;
+  const { count, error } = await supabase
+    .from('alumni_data')
+    .select('*', { count: 'exact', head: true });
+
+  if (error) {
+    console.error('🔥 Error getting total alumni:', error);
+    return 0;
+  }
+
+  cachedTotal = count;
+  cacheExpiry = now + 6 * 60 * 60 * 1000;
+
+  return count;
 };
