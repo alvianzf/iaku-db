@@ -32,7 +32,6 @@ const ResultCard = ({ query, alumni = {} }) => {
         </div>
       </div>
 
-
       <div className="space-y-3">
         <div>
           <div>
@@ -70,8 +69,8 @@ const ResultCard = ({ query, alumni = {} }) => {
           <button
             onClick={() =>
               window.open(
-                `https://wa.me/6281312771595?text=${encodeURIComponent(
-                  `Halo, saya membutuhkan data alumni "${query}`
+                `https://wa.me/6287894510004?text=${encodeURIComponent(
+                  `Hai Kang 😊\nSaya mau tanya data alumni ya.\nBoleh dibantu? Terima kasih sebelumnya 🙏`
                 )}`,
                 "_blank"
               )

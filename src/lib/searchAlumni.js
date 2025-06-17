@@ -3,7 +3,6 @@ import { supabase } from "./supabase";
 export const searchAlumni = async (text, page = 1, limit = 12) => {
   if (!text || text.length < 2) return { data: [], count: 0 };
 
-  const likeQuery = `%${text}%`;
   const offset = (page - 1) * limit;
 
   const { data, error, count } = await supabase
