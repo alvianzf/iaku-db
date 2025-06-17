@@ -1,30 +1,30 @@
 import React from "react";
 import { Link } from "react-router-dom";
+import iaku from '../assets/iaku.png';
 
 const Layout = ({ children }) => {
   return (
     <div className="bg-gradient-to-br from-blue-50 via-white to-purple-50 min-h-screen flex flex-col">
-      <nav className="bg-gradient-to-br from-blue-50 via-white to-purple-50 text-black p-4">
+      <nav className="text-black p-4">
         <div className="container mx-auto flex justify-between items-center">
           <Link to="/" className="text-xl font-bold">
-            IAKU Database
+            <img src={iaku} alt="Logo IAKU" className="w-16 h-16 object-cover" />
           </Link>
-          <div className="space-x-4">
-            <Link to="/" className="hover:text-gray-200">
+          <div className="space-x-6 text-2xl">
+            <Link to="/" className="hover:text-blue-600">
               Home
             </Link>
-            <Link to="/stats" className="hover:text-gray-200">
+            <Link to="/stats" className="hover:text-blue-600">
               Statistik
             </Link>
           </div>
         </div>
       </nav>
 
-      <main className="">{children}</main>
+      <main className="flex-grow container mx-auto px-4 py-6">{children}</main>
 
-      <footer className="bg-gradient-to-br from-blue-50 via-white to-purple-50 mt-4 text-center text-gray-500 text-sm mb-6">
-        &copy; {new Date().getFullYear()} Database Alumni Kimia Unpad. All
-        rights reserved.
+      <footer className="text-center text-gray-500 text-sm py-6">
+        &copy; {new Date().getFullYear()} Database Alumni Kimia Unpad. All rights reserved.
       </footer>
     </div>
   );
