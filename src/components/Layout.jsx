@@ -17,6 +17,9 @@ const Layout = ({ children }) => {
             <Link to="/stats" className="hover:text-blue-600">
               Statistik
             </Link>
+            <Link to="/form-alumni" className="hover:text-blue-600">
+              Form Alumni
+            </Link>
           </div>
         </div>
       </nav>

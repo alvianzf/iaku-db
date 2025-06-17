@@ -9,6 +9,10 @@ const routes = [
   {
     path: "/stats",
     component: React.lazy(() => import("../pages/Statistik")),
+  },
+  {
+    path: "/form-alumni",
+    component: React.lazy(() => import("../pages/Form")),
   }
 ];
 
