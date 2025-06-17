@@ -41,6 +41,7 @@ function App() {
               key={index}
               searchQuery={query}
               alumni={result}
+              query={query}
               isLoading={loading}
             />
           ))
