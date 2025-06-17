@@ -36,3 +36,17 @@ export const searchAlumni = async (text) => {
 
   return combined;
 };
+
+export const getTotalAlumni = async () => {
+    let { count, error } = await supabase
+        .from('alumni_data')
+        .select('*', { count: 'exact', head: true });
+
+    if (error) {
+        console.error('🔥 Error getting total alumni:', error);
+        return 0;
+    }
+
+    return count;
+};
+
