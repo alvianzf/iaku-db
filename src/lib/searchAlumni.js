@@ -78,3 +78,62 @@ export const getTotalAlumni = async () => {
 
   return count;
 };
+
+export const addAlumni = async (alumniData) => {
+  const { data, error } = await supabase
+    .from("alumni_data")
+    .insert([alumniData])
+    .select();
+
+  if (error) {
+    console.error("🔥 Error adding alumni:", error);
+    return null;
+  }
+
+  return data[0];
+}
+
+export const updateAlumni = async (id, alumniData) => {
+  const { data, error } = await supabase
+    .from("alumni_data")
+    .update(alumniData)
+    .eq("id", id)
+    .select();
+
+  if (error) {
+    console.error("🔥 Error updating alumni:", error);
+    return null;
+  }
+
+  return data[0];
+}
+
+export const deleteAlumni = async (id) => {
+  const { data, error } = await supabase
+    .from("alumni_data")
+    .delete()
+    .eq("id", id)
+    .select();
+
+  if (error) {
+    console.error("🔥 Error deleting alumni:", error);
+    return null;
+  }
+
+  return data[0];
+}
+
+export const getAlumniById = async (id) => {
+  const { data, error } = await supabase
+    .from("alumni_data")
+    .select("*")
+    .eq("id", id)
+    .single();
+
+  if (error) {
+    console.error("🔥 Error getting alumni by ID:", error);
+    return null;
+  }
+
+  return data;
+}
