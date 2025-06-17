@@ -2,9 +2,10 @@ import React from "react";
 import { GraduationCap, MessageCircle } from "lucide-react";
 import { maskName, maskWhatsapp } from "../../utils/mask";
 
-const ResultCard = ({query, alumni = {} }) => {
+const ResultCard = ({ query, alumni = {} }) => {
   const {
     nama_lengkap,
+    perusahaan,
     angkatan,
     bidang_pekerjaan,
     subbidang_pekerjaan,
@@ -18,7 +19,7 @@ const ResultCard = ({query, alumni = {} }) => {
   const obscuredWhatsapp = maskWhatsapp(whatsapp || "");
 
   return (
-    <div className="w-full md:w-1/4 bg-white rounded-lg shadow-md p-6">
+    <div className="w-full min-w-[308px] md:w-1/4 bg-white rounded-lg shadow-md p-6">
       <div className="flex items-center space-x-4 mb-4">
         <div className="bg-gradient-to-br from-blue-100 to-purple-100 rounded-full p-3">
           <GraduationCap className="w-6 h-6 text-blue-600" />
@@ -31,7 +32,14 @@ const ResultCard = ({query, alumni = {} }) => {
         </div>
       </div>
 
+
       <div className="space-y-3">
+        <div>
+          <div>
+            <p className="text-sm font-medium text-gray-500">Perusahaan</p>
+            <p className="text-gray-700">{perusahaan || "N/A"}</p>
+          </div>
+        </div>
         <div>
           <p className="text-sm font-medium text-gray-500">Pekerjaan</p>
           <p className="text-gray-700">
@@ -63,7 +71,7 @@ const ResultCard = ({query, alumni = {} }) => {
             onClick={() =>
               window.open(
                 `https://wa.me/6281312771595?text=${encodeURIComponent(
-                  `Halo, saya membutuhkan data alumni "${query}"`
+                  `Halo, saya membutuhkan data alumni "${query}`
                 )}`,
                 "_blank"
               )

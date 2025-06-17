@@ -8,6 +8,9 @@ function App() {
   const [query, setQuery] = useState("");
   const [loading, setLoading] = useState(false);
   const [results, setResults] = useState([]);
+  const [page, setPage] = useState(1);
+  const [totalResults, setTotalResults] = useState(0);
+  const [totalPages, setTotalPages] = useState(0);
 
   useEffect(() => {
     document.title = "IAKU | Alumni Database";
@@ -17,7 +20,12 @@ function App() {
     setQuery(query);
     try {
       const queryResult = await searchAlumni(query);
-      setResults(queryResult);
+
+      setResults(queryResult.data);
+      setPage(queryResult.page);
+      setTotalResults(queryResult.count);
+      setTotalPages(Math.ceil(queryResult.count / 12));
+
       if (queryResult.length === 0) {
         console.warn("No results found for query:", query);
       }
@@ -45,6 +53,7 @@ function App() {
               key={index}
               searchQuery={query}
               alumni={result}
+              page={page}
               query={query}
               isLoading={loading}
             />

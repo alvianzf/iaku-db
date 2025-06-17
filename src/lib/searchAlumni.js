@@ -1,41 +1,41 @@
 import { supabase } from './supabase';
 
-export const searchAlumni = async (text) => {
-  if (!text || text.length < 2) return [];
+export const searchAlumni = async (text, page = 1, limit = 12) => {
+    if (!text || text.length < 2) return { data: [], count: 0 };
 
-  const likeQuery = `%${text}%`;
+    const likeQuery = `%${text}%`;
+    const offset = (page - 1) * limit;
 
-  let { data, error } = await supabase
-    .from('alumni_data')
-    .select('*')
-    .or(
-      `
-        nama_lengkap.ilike."${likeQuery}",
-        perusahaan.ilike."${likeQuery}",
-        jabatan.ilike."${likeQuery}",
-        bidang_pekerjaan.ilike."${likeQuery}",
-        subbidang_pekerjaan.ilike."${likeQuery}",
-        domisili_kota.ilike."${likeQuery}",
-        domisili_provinsi.ilike."${likeQuery}"
-      `.replace(/\s+/g, '')
-    );
+    let { data, error, count } = await supabase
+        .from('alumni_data')
+        .select('*', { count: 'exact' })
+        .or(
+            `
+                nama_lengkap.ilike."${likeQuery}",
+                perusahaan.ilike."${likeQuery}",
+                jabatan.ilike."${likeQuery}",
+                bidang_pekerjaan.ilike."${likeQuery}",
+                subbidang_pekerjaan.ilike."${likeQuery}",
+                domisili_kota.ilike."${likeQuery}",
+                domisili_provinsi.ilike."${likeQuery}"
+            `.replace(/\s+/g, '')
+        )
+        .range(offset, offset + limit - 1);
 
-  if (error) {
-    console.error('🔥 Supabase exploded:', error);
-    return [];
-  }
+    if (error) {
+        console.error('🔥 Supabase exploded:', error);
+        return { 
+            data: [], page: 0, totalResults: 0,  totalPages: 0};
+    }
 
-  const filtered = data.filter(
-    (row) => row.angkatan?.toString().includes(text)
-  );
-
-  const combined = [...data, ...filtered].filter(
-    (item, index, self) =>
-      index === self.findIndex((t) => t.id === item.id)
-  );
-
-  return combined;
+    return {
+        data: data || [],
+        page: page,
+        totalResults: count || 0,
+        totalPages: Math.ceil((count || 0) / limit)
+    };
 };
+
 
 let cachedTotal = null;
 let cacheExpiry = null;
