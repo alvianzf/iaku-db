@@ -30,6 +30,9 @@ export const searchAlumni = async (text, page = 1, limit = 12) => {
         "%," +
         "domisili_provinsi.ilike.%" +
         text +
+        "%," +
+        "angkatan.ilike.%" +
+        text +
         "%"
     )
     .range(offset, offset + limit - 1);
