@@ -48,7 +48,7 @@ function App() {
         ) : (
           <div>
             <p className="text-gray-500 text-center">
-              {loading ? "Alumni tidak ditemukan, sedang memuat..." : "Tidak ada alumni yang ditemukan."}
+              {query.length == 0 ? "Silahkan mulai mencari Alumni" : "Tidak ada alumni yang ditemukan."}
             </p>
           </div>
         )}
