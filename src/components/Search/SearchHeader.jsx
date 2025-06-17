@@ -31,7 +31,7 @@ function SearchHeader({ query, onSearch, isLoading }) {
             type="text"
             value={query}
             onChange={(e) => onSearch(e.target.value)}
-            placeholder="Cari berdasarkan nama, perusahaan, angkatan, jabatan, atau lokasi..."
+            placeholder="Cari berdasarkan nama, bidang pekerjaan, jabatan, atau lokasi..."
             className="w-full pl-16 pr-6 py-5 text-lg border-2 border-gray-200 rounded-2xl focus:border-blue-500 focus:outline-none transition-all duration-200 shadow-sm hover:shadow-md bg-white"
             disabled={isLoading}
           />

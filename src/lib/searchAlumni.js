@@ -16,7 +16,7 @@ export const searchAlumni = async (text) => {
         bidang_pekerjaan.ilike."${likeQuery}",
         subbidang_pekerjaan.ilike."${likeQuery}",
         domisili_kota.ilike."${likeQuery}",
-        domisili_provinsi.ilike."${likeQuery}"
+        domisili_provinsi.ilike."${likeQuery}",
       `.replace(/\s+/g, '')
     );
 
