@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { searchAlumni } from "../lib/searchAlumni";
 
 import ResultCard from "../components/database/ResultCard";
@@ -8,6 +8,10 @@ function App() {
   const [query, setQuery] = useState("");
   const [loading, setLoading] = useState(false);
   const [results, setResults] = useState([]);
+
+  useEffect(() => {
+    document.title = "IAKU | Alumni Database";
+  }, []);
 
   const onSearch = async (query) => {
     setQuery(query);
@@ -22,7 +26,7 @@ function App() {
     } finally {
       setLoading(false);
     }
-  }
+  };
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
       <div className="container mx-auto py-12">
@@ -30,11 +34,11 @@ function App() {
       </div>
       {results.length > 0 && (
         <h3 className="text-gray-600 text-center mb-6">
-        Menampilkan <strong>{results.length}</strong> hasil untuk <strong>"{query}"</strong>
+          Menampilkan <strong>{results.length}</strong> hasil untuk{" "}
+          <strong>"{query}"</strong>
         </h3>
       )}
       <div className="mt-8 flex flex-column flex-wrap px-4 gap-4 justify-center">
-      
         {results.length > 0 ? (
           results.map((result, index) => (
             <ResultCard
@@ -48,7 +52,9 @@ function App() {
         ) : (
           <div>
             <p className="text-gray-500 text-center">
-              {query.length == 0 ? "Silahkan mulai mencari Alumni" : "Tidak ada alumni yang ditemukan."}
+              {query.length == 0
+                ? "Silahkan mulai mencari Alumni"
+                : "Tidak ada alumni yang ditemukan."}
             </p>
           </div>
         )}
