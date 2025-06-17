@@ -1,42 +1,33 @@
-import React from 'react';
-import { Link } from 'react-router-dom';
+import React from "react";
+import { Link } from "react-router-dom";
 
 const Layout = ({ children }) => {
-    return (
-        <div className="min-h-screen flex flex-col">
-            {/* Menubar */}
-            <nav className="bg-blue-600 text-white p-4">
-                <div className="container mx-auto flex justify-between items-center">
-                    <Link to="/" className="text-xl font-bold">
-                        Alumni Lookup
-                    </Link>
-                    <div className="space-x-4">
-                        <Link to="/" className="hover:text-gray-200">
-                            Home
-                        </Link>
-                        <Link to="/search" className="hover:text-gray-200">
-                            Search
-                        </Link>
-                        <Link to="/about" className="hover:text-gray-200">
-                            About
-                        </Link>
-                    </div>
-                </div>
-            </nav>
-
-            {/* Main content */}
-            <main className="flex-grow container mx-auto p-4">
-                {children}
-            </main>
-
-            {/* Footer */}
-            <footer className="bg-gray-100 p-4">
-                <div className="container mx-auto text-center text-gray-600">
-                    © {new Date().getFullYear()} Alumni Lookup. All rights reserved.
-                </div>
-            </footer>
+  return (
+    <div className="bg-gradient-to-br from-blue-50 via-white to-purple-50 min-h-screen flex flex-col">
+      <nav className="bg-gradient-to-br from-blue-50 via-white to-purple-50 text-black p-4">
+        <div className="container mx-auto flex justify-between items-center">
+          <Link to="/" className="text-xl font-bold">
+            IAKU Database
+          </Link>
+          <div className="space-x-4">
+            <Link to="/" className="hover:text-gray-200">
+              Home
+            </Link>
+            <Link to="/stats" className="hover:text-gray-200">
+              Statistik
+            </Link>
+          </div>
         </div>
-    );
+      </nav>
+
+      <main className="">{children}</main>
+
+      <footer className="bg-gradient-to-br from-blue-50 via-white to-purple-50 mt-4 text-center text-gray-500 text-sm mb-6">
+        &copy; {new Date().getFullYear()} Database Alumni Kimia Unpad. All
+        rights reserved.
+      </footer>
+    </div>
+  );
 };
 
 export default Layout;
