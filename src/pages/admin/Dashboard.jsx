@@ -195,7 +195,7 @@ const Dashboard = () => {
                     )}
                   </td>
                 ))}
-                <td className="flex gap-2 justify-center items-center p-2 bg-white">
+                <td className="flex gap-6 justify-center items-center p-2 bg-white">
                   {editingId === a.id ? (
                     <>
                       <button
