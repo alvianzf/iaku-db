@@ -137,3 +137,16 @@ export const getAlumniById = async (id) => {
 
   return data;
 }
+
+export const getAllAlumni = async () => {
+    const { data, error } = await supabase
+        .from("alumni_data")
+        .select("*");
+
+    if (error) {
+        console.error("🔥 Supabase exploded:", error);
+        return [];
+    }
+
+    return data || [];
+};

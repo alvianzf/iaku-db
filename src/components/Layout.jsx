@@ -1,6 +1,7 @@
 import React from "react";
 import { Link } from "react-router-dom";
-import iaku from '../assets/iaku.png';
+import iaku from "../assets/iaku.png";
+import { Shield } from "lucide-react";
 
 const Layout = ({ children }) => {
   return (
@@ -8,18 +9,27 @@ const Layout = ({ children }) => {
       <nav className="text-black p-4">
         <div className="container mx-auto flex justify-between items-center">
           <Link to="/" className="text-xl font-bold">
-            <img src={iaku} alt="Logo IAKU" className="w-16 h-16 object-cover" />
+            <img
+              src={iaku}
+              alt="Logo IAKU"
+              className="w-16 h-16 object-cover"
+            />
           </Link>
-          <div className="space-x-6 text-2xl">
+          <div className="space-x-10 text-2xl inline-flex items-center">
             <Link to="/" className="hover:text-blue-600">
               Home
             </Link>
             <Link to="/stats" className="hover:text-blue-600">
               Statistik
             </Link>
-            <Link to="/form-alumni" className="hover:text-blue-600">
+            <Link to="/form-alumni" className="hover:text-blue-600 ">
               Form Alumni
             </Link>
+            <div className="inline-flex items-center">
+              <Link to="/auth" className="bg-blue-600 text-white px-3 py-2 rounded hover:bg-blue-700 transition-colors duration-200">
+                <Shield size={24} />
+              </Link>
+            </div>
           </div>
         </div>
       </nav>
@@ -27,7 +37,8 @@ const Layout = ({ children }) => {
       <main className="flex-grow container mx-auto px-4 py-6">{children}</main>
 
       <footer className="text-center text-gray-500 text-sm py-6">
-        &copy; {new Date().getFullYear()} Database Alumni Kimia Unpad. All rights reserved.
+        &copy; {new Date().getFullYear()} Database Alumni Kimia Unpad. All
+        rights reserved.
       </footer>
     </div>
   );
