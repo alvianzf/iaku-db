@@ -23,6 +23,46 @@ publicly routable, so the database is currently reachable by anyone on the
 internet who guesses or obtains the password. Firewall it to the app server's IP
 if the host allows it.
 
+### P0 — The Postgres server refuses TLS
+
+Confirmed by testing, not assumed:
+
+```
+sslmode=require -> "The server does not support SSL connections"
+```
+
+The app server (`43.159.55.204`) and the database (`103.94.238.99`) are on
+different networks, so **every query crosses the public internet in cleartext** —
+the database password on connect, and every alumni name and phone number in the
+result sets. Anyone positioned on the path can read all of it.
+
+`sslmode=require` cannot be set until the host enables TLS, so the connection
+string in [02](./02-database.md) omits it and the topology diagram in
+[01](./01-architecture.md) marks the link PLAINTEXT.
+
+Ask the provider to enable TLS. Until then the only available mitigations are
+IP-restricting the DB port and accepting the exposure knowingly. Do not let
+`sslmode=require` sit in a config file where it silently falls back — if it is
+added, verify it actually negotiates.
+
+### Note — connections are currently rejected at the host level
+
+Separate from the above, the database is refusing connections outright:
+
+```
+correct creds -> 28000 kamu tidak punya akses ke database ini
+wrong password -> 28000 (identical)
+nonexistent user -> 28000 (identical)
+```
+
+A nonexistent user and a wrong password produce the **byte-identical** error, so
+the server is rejecting before evaluating credentials — `pg_hba.conf` or a proxy
+doing host-based filtering, not a credential problem. Resending the password
+cannot fix it; the connecting IP has to be allowlisted.
+
+This is why the `Alumni` model in `schema.prisma` remains **unverified
+inference** and must be reconciled with `db:pull` before any push.
+
 ## P0 — Unmasked data over the wire
 
 `searchAlumni.js` does `select("*")`. `ResultCard.jsx` then calls `maskName()`

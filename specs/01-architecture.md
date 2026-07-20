@@ -34,7 +34,7 @@ nginx  (43.159.55.204:443)
   └── /api/*       → proxy_pass 127.0.0.1:3000
                         │
                      Express API (pm2)
-                        │  TCP + TLS, private
+                        │  TCP, PLAINTEXT (server refuses TLS)
                         ▼
                      Postgres  103.94.238.99:65433
 ```
@@ -44,8 +44,11 @@ Postgres is on a different host from the app server. Two consequences:
 - **Latency per query is a network round trip.** N+1 query patterns are much
   more expensive here than against a local DB. Prisma connection pooling is not
   optional.
-- **The DB port is publicly routable.** It must be firewalled to the app
-  server's IP, and `sslmode=require` must be set. See 07.
+- **The DB port is publicly routable, and the server refuses TLS.** Tested:
+  `sslmode=require` fails with "The server does not support SSL connections", so
+  queries and credentials cross the public internet in cleartext between two
+  different hosts. Firewalling to the app server's IP is therefore the *only*
+  control available. Escalated in 07.
 
 ## Repo layout
 
@@ -59,8 +62,7 @@ iaku-db/
 ├── server/
 │   ├── package.json
 │   ├── prisma/
-│   │   ├── schema.prisma
-│   │   └── migrations/
+│   │   └── schema.prisma
 │   └── src/
 │       ├── index.js          # express bootstrap
 │       ├── env.js            # validated env, fails fast
@@ -90,7 +92,7 @@ consumers.
 | Concern | Choice | Reason |
 |---|---|---|
 | Server | Express 4 | Team already writes JS; no build step |
-| ORM | Prisma | The `?schema=public` suffix on the supplied URL is Prisma-specific syntax; migrations and typed models come free |
+| ORM | Prisma | The `?schema=public` suffix on the supplied URL is Prisma-specific syntax; typed models and `db push` schema sync come free |
 | Sessions | JWT in httpOnly cookie | No session store to run; see 03 for the trade-off |
 | Hashing | bcrypt, cost 12 | Standard, well-audited |
 | Process mgr | pm2 | Restart-on-boot, log rotation, zero-downtime reload |
@@ -98,8 +100,13 @@ consumers.
 
 **Dependency justification** (per house rule: every dependency is permanent):
 `express`, `@prisma/client`, `bcrypt`, `jsonwebtoken`, `zod`, `cookie-parser`,
-`helmet`, `express-rate-limit`. Nothing else. No `axios` — the frontend already
-uses `fetch` and will continue to.
+`helmet`, `express-rate-limit`, `cors`, `dotenv`, and `libphonenumber-js`
+(justified in 03 — it replaces hand-rolled per-country rules once the form gained
+a country selector). No `axios` — the frontend already uses `fetch`.
+
+`bcrypt` is pinned to **^6**: v5 pulls `node-pre-gyp` → `tar`, which carries
+several path-traversal advisories, into the *production* tree. v6 uses
+`node-gyp-build`. `npm audit --omit=dev` is clean.
 
 ## Local development
 
@@ -111,7 +118,7 @@ server: { proxy: { '/api': 'http://localhost:3000' } }
 ```
 
 Root scripts: `npm run dev` runs client and server concurrently; `npm run
-build` builds the client; `npm run migrate` runs Prisma migrations.
+build` builds the client. Schema sync is a deliberate manual step: `npm run db:push` from `server/` (see 02).
 
 ## What is deliberately NOT in scope
 

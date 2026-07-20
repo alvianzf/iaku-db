@@ -153,10 +153,9 @@ concurrency:
   cancel-in-progress: false
 ```
 
-`concurrency` matters: two overlapping deploys can interleave rsync and
-`prisma migrate` and leave the host in a state that matches no commit.
-`cancel-in-progress: false` lets the running deploy finish rather than being
-killed mid-migration.
+`concurrency` matters: two overlapping deploys can interleave rsync and leave
+the host with files from two different commits. `cancel-in-progress: false` lets
+the running deploy finish rather than being killed halfway through an rsync.
 
 ### Jobs
 
@@ -180,27 +179,36 @@ without it this gate is decorative.
 3. `rsync -az --delete dist/ ubuntu@host:/var/www/iaku/`
 4. `rsync -az --delete server/ ubuntu@host:/opt/iaku/server/` (excluding
    `node_modules`, `.env`)
-5. Over SSH: `npm ci --omit=dev`, then `npx prisma migrate deploy`, then
+5. Over SSH: `npm ci --omit=dev`, then `npx prisma generate`, then
    `pm2 reload iaku-api`.
 6. Purge the Cloudflare cache for `index.html` via API.
 7. Smoke test: `curl -f https://iaku.alvianzf.id/api/health` — fail the job on
    non-200.
 
-`prisma migrate deploy` (not `migrate dev`) is the production command: it
-applies committed migrations and never generates or resets.
-
 `pm2 reload` rather than `restart` — reload is zero-downtime.
 
-### Migrations are the risky step
+### Schema changes are deliberately NOT in the pipeline
 
-`migrate deploy` runs **before** the new code is live, so a migration that drops
-or renames a column breaks the still-running old process. For destructive
-schema changes, use the expand/contract pattern: deploy the additive migration
-and new code first, remove the old column in a later deploy.
+The project uses `prisma db push` rather than migrations
+([02](./02-database.md#schema-management-db-push-not-migrations)), and **`db
+push` must never run automatically on deploy.**
+
+Unlike `migrate deploy`, which replays reviewed, committed migration files,
+`db push` diffs the schema against the live database and alters it to match.
+Wired into CI, a stray edit to `schema.prisma` becomes an unreviewed `ALTER
+TABLE` against production — and where the change is destructive, a dropped
+column. There is no migration file to review in the PR, which is precisely what
+makes automating it unsafe.
+
+So schema changes are a **manual, deliberate step**: take a dump, run
+`npm run db:push` by hand, read what it proposes, then deploy the code.
+
+`npx prisma generate` *is* in the pipeline — it only regenerates the client from
+the committed schema and touches nothing in the database.
 
 There is no automatic rollback. `pm2` keeps the previous release only if the
-rsync did not overwrite it — so **take a DB backup before any migration**, as a
-step in the workflow, not a habit.
+rsync did not overwrite it — so **take a DB backup before any schema change**,
+as a step you actually perform, not a habit you intend.
 
 ## Secrets
 

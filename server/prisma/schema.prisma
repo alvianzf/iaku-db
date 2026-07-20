@@ -1,3 +1,12 @@
+// Schema for the IAKU alumni database.
+//
+// Managed with `prisma db push` (no migration history) -- see specs/02-database.md.
+//
+// WARNING: the Alumni model below is reconstructed from field usage in the old
+// Supabase-backed frontend. It has NOT been verified against the live table,
+// because the database currently rejects connections at the host level. Run
+// `prisma db pull` and reconcile BEFORE the first push against real data.
+
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
@@ -5,4 +14,112 @@ datasource db {
 
 generator client {
   provider = "prisma-client-js"
+}
+
+/// Alumni records. Publicly searchable (masked); writable by admins and by the
+/// owning alumnus.
+model Alumni {
+  id                 String   @id @default(uuid()) @db.Uuid
+  namaLengkap        String   @map("nama_lengkap")
+  /// Entry year. Integer, not text -- which is why the old `angkatan.ilike`
+  /// search could never have worked. Validated to 1957..currentYear+1 at the
+  /// API boundary.
+  angkatan           Int
+  perusahaan         String?
+  jabatan            String?
+  bidangPekerjaan    String?  @map("bidang_pekerjaan")
+  subbidangPekerjaan String?  @map("subbidang_pekerjaan")
+  /// E.164, normalised. Never returned unmasked on a public route.
+  whatsapp           String?
+  domisiliProvinsi   String?  @map("domisili_provinsi")
+  domisiliKota       String?  @map("domisili_kota")
+  createdAt          DateTime @default(now()) @map("created_at")
+  updatedAt          DateTime @updatedAt @map("updated_at")
+
+  user User?
+
+  @@index([angkatan])
+  @@index([createdAt(sort: Desc)])
+  @@map("alumni_data")
+}
+
+enum Role {
+  ALUMNI
+  ADMIN
+}
+
+/// Login accounts. Identified by a normalised phone number, never an email.
+model User {
+  id           String    @id @default(uuid()) @db.Uuid
+  /// E.164. UNIQUE -- this constraint is what makes normalisation load-bearing
+  /// rather than cosmetic.
+  phoneE164    String    @unique @map("phone_e164")
+  passwordHash String    @map("password_hash")
+  role         Role      @default(ALUMNI)
+  /// Links a login to the alumni record it may edit. Nullable: an admin need
+  /// not be an alumnus. SetNull so deleting an alumni record does not silently
+  /// delete the account.
+  alumniId     String?   @unique @map("alumni_id") @db.Uuid
+  alumni       Alumni?   @relation(fields: [alumniId], references: [id], onDelete: SetNull)
+  createdAt    DateTime  @default(now()) @map("created_at")
+  lastLoginAt  DateTime? @map("last_login_at")
+
+  jobs Job[]
+
+  @@map("users")
+}
+
+enum EmploymentType {
+  FULL_TIME
+  PART_TIME
+  CONTRACT
+  INTERNSHIP
+  FREELANCE
+}
+
+enum WorkArrangement {
+  ONSITE
+  HYBRID
+  REMOTE
+}
+
+enum JobStatus {
+  PENDING
+  PUBLISHED
+  REJECTED
+  CLOSED
+}
+
+/// Job board. All submissions are moderated: recruitment scams targeting alumni
+/// networks are common, and the association's name is on the page.
+model Job {
+  id              String          @id @default(uuid()) @db.Uuid
+  title           String
+  company         String
+  location        String?
+  employmentType  EmploymentType  @default(FULL_TIME) @map("employment_type")
+  workArrangement WorkArrangement @default(ONSITE) @map("work_arrangement")
+  description     String
+  requirements    String?
+  salaryMin       Int?            @map("salary_min")
+  salaryMax       Int?            @map("salary_max")
+  /// At least one apply channel is required. Enforced in zod, not the DB --
+  /// it is a cross-field rule.
+  applyUrl        String?         @map("apply_url")
+  applyEmail      String?         @map("apply_email")
+  applyWhatsapp   String?         @map("apply_whatsapp")
+  status          JobStatus       @default(PENDING)
+  closesAt        DateTime?       @map("closes_at")
+  /// Required and non-nullable: every job traces to an account. No cascade, so
+  /// deleting a user with posts is blocked rather than orphaning them.
+  postedById      String          @map("posted_by_id") @db.Uuid
+  postedBy        User            @relation(fields: [postedById], references: [id])
+  createdAt       DateTime        @default(now()) @map("created_at")
+  publishedAt     DateTime?       @map("published_at")
+
+  /// Matches the main list query exactly -- the only query that runs on every
+  /// page load.
+  @@index([status, publishedAt(sort: Desc)])
+  @@index([status, closesAt])
+  @@map("jobs")
 }

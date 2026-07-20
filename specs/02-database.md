@@ -182,18 +182,42 @@ Two details in that expression are load-bearing:
   it unsearchable by every other field. This is a quiet, total failure — the row
   simply never appears in results.
 
+## Schema management: `db push`, not migrations
+
+**Decision: `prisma db push`.** No `migrations/` directory, no migration history.
+
+Reasonable here because the target is greenfield and the site is offline — there
+is no production history to preserve and no incremental upgrade path to replay.
+It also removes a whole class of deploy failure (a half-applied migration).
+
+What is given up, stated so it is a choice rather than an accident:
+
+- **No rollback artifact.** There is no `down` step and no record of what
+  changed. The database dump *is* the rollback.
+- **No reproducible schema history.** `schema.prisma` at a given commit is the
+  only record of what the schema was.
+- **`db push` can drop data.** When the schema disagrees with the live table,
+  push resolves it by altering the table — dropping a column it does not know
+  about, or narrowing a type. Prisma refuses destructive changes without
+  `--accept-data-loss`, so **never pass that flag reflexively**; read what it is
+  about to drop.
+
+Because of that last point, the order below matters: pull first, reconcile, then
+push. Pushing an unverified schema at a populated table is exactly how columns
+disappear.
+
+If the project later needs auditable schema changes against live data, switch to
+`prisma migrate` — `db push` is the right call for the rebuild, not forever.
+
 ## Migration from Supabase
 
-Run once, ordered, reversible up to step 5.
-
-1. **Inspect.** `\d alumni_data`, `\d alumni_stats` on the Supabase instance.
-   Record actual types and nullability. Correct this document where it is wrong.
+1. **Inspect.** `npm run db:pull` against the target, and `\d alumni_data` on
+   Supabase. Reconcile `schema.prisma` with what actually exists. **The Alumni
+   model is currently unverified inference** — this step is what makes it real.
 2. **Export.** `pg_dump --data-only --table=alumni_data` from Supabase. Keep the
    dump; it is the rollback.
-3. **Baseline.** Write `schema.prisma` to match reality, then
-   `prisma migrate dev --name init` against a scratch DB to generate the
-   forward migration.
-4. **Load.** Apply the migration to the target, restore the data dump.
+3. **Push.** `npm run db:push` against the target.
+4. **Load.** Restore the data dump.
 5. **Normalise phone numbers.** The backfill in 03. This is the first
    destructive step — it rewrites `whatsapp` in place. Snapshot first.
 6. **Seed the first admin.** A CLI script, not a UI (see 07 — the current
