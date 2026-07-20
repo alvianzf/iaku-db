@@ -107,16 +107,35 @@ describe('rejections', () => {
     expect(tryNormalizePhone(input, country)).toEqual({ ok: false, reason });
   });
 
-  it('rejects an Indonesian landline — the field is WhatsApp', () => {
-    expect(tryNormalizePhone('+62 21 1234 5678')).toEqual({
-      ok: false,
-      reason: 'not-mobile',
+  // The field is a WhatsApp number, so landlines are rejected everywhere the
+  // numbering plan makes them distinguishable.
+  describe('landlines are rejected', () => {
+    const landlines = [
+      ['2112345678', 'ID'], // Jakarta
+      ['+62 21 1234 5678', 'ID'],
+      ['2079460958', 'GB'], // London
+      ['3012345678', 'DE'], // Berlin
+      ['212345678', 'AU'], // Sydney
+      ['201234567', 'NL'], // Amsterdam
+      ['62345678', 'SG'],
+      ['1123456789', 'IN'], // Delhi
+    ];
+
+    it.each(landlines)('rejects %s (%s) as not-mobile', (input, country) => {
+      expect(tryNormalizePhone(input, country)).toEqual({
+        ok: false,
+        reason: 'not-mobile',
+      });
     });
   });
 
-  it('accepts FIXED_LINE_OR_MOBILE — US numbers cannot be distinguished', () => {
-    // Rejecting this type would lock out every US alumnus.
+  it('accepts US/Canada numbers — the NANP cannot distinguish mobile', () => {
+    // US and Canada are the ONLY countries that report FIXED_LINE_OR_MOBILE:
+    // a NANP number carries no mobile/landline distinction at all. Rejecting
+    // the type would lock out every US and Canadian alumnus, so it is accepted.
+    // This is the one place a landline can slip through, and it is unavoidable.
     expect(tryNormalizePhone('4155550123', 'US').ok).toBe(true);
+    expect(tryNormalizePhone('4165550123', 'CA').ok).toBe(true);
   });
 
   it.each([null, undefined, 12345, {}, []])('rejects non-string %j', (input) => {

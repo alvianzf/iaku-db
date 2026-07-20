@@ -69,13 +69,21 @@ Steps, in order:
    default region. Unparseable → `unrecognized-format`.
 5. `isValid()` → else `invalid-number`. This subsumes the hand-rolled
    length and prefix checks, per country, from real metadata.
-6. **Type check:** accept `MOBILE` and `FIXED_LINE_OR_MOBILE`; reject a definite
-   `FIXED_LINE` → `not-mobile`. The field is *WhatsApp*.
-   `FIXED_LINE_OR_MOBILE` **must** be accepted — many countries (the US among
-   them) cannot distinguish, and rejecting it would lock out every US alumnus.
-   Trade-off: WhatsApp Business can run on a landline, so this rejects a small
-   class of valid numbers. The failure is visible and user-reported, which is why
-   it is the safer direction to err in.
+6. **Type check — the field is a WhatsApp number, so landlines are rejected.**
+   Accept `MOBILE`; reject `FIXED_LINE` → `not-mobile`. Verified working across
+   ID, GB, DE, AU, NL, SG, and IN — a Jakarta landline, a London landline, and
+   so on are all correctly refused.
+
+   `FIXED_LINE_OR_MOBILE` is also accepted, and this is **not** a loosening of
+   the rule. Probing all major alumni destinations showed that **only the US and
+   Canada** ever report it: the NANP assigns no mobile/landline distinction at
+   the numbering-plan level, so it is not knowable from the number. Every other
+   country returns a definite `MOBILE` or `FIXED_LINE`.
+
+   So the choice in NANP is binary: accept the ambiguous type, or lock out every
+   US and Canadian alumnus. It accepts. This is the one place a landline can slip
+   through, and no library or rule can close it — the information does not exist
+   in the number.
 7. Return `parsed.number` — always E.164.
 
 `tryNormalizePhone` is the non-throwing variant, used by the backfill (where a
