@@ -139,8 +139,23 @@ Redesign:
 - **Relax `required`.** All nine mandatory is why records are sparse or fake —
   someone between jobs cannot submit. Require nama, angkatan, whatsapp. The rest
   optional.
-- **Live-normalise the phone field**, showing the canonical `+62…` form as the
-  user types, so they see what will be stored.
+- **Phone becomes a country selector + national-number field**
+  ([03](./03-auth.md#input-model-country-selector--national-number)), defaulting
+  to Indonesia. The user types `812 3456 7890`, not a country code.
+
+  **Bundle decision — do not import `libphonenumber-js/max` on the client.** The
+  server uses `/max` because it needs `getType()` and the bytes are free there;
+  shipping the same metadata to the browser is ~150KB for a form field. Instead:
+
+  - The country list comes from `GET /api/meta/countries` (backed by
+    `countryOptions()`), so the dial codes have one source of truth.
+  - The client does **presentational formatting only** — digits and spacing.
+  - **Real validation is server-side**, returned as a field-level error. This is
+    already required regardless, since client validation is never authoritative.
+
+  If live client-side validity feedback proves worth it later,
+  `libphonenumber-js/min` is the smaller option — but note it cannot detect
+  landlines, so it would be a weaker check than the server's, not an equal one.
 - **`angkatan` becomes a constrained year input.** It is an `integer`
   ([02](./02-database.md#angkatan-is-an-integer--decided)), and a bare
   `type="number"` accepts `19` and `20255` alike. Use a `Select` of valid years

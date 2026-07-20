@@ -27,6 +27,23 @@ parentheses. `+6281234567890`.
 
 Stored in `users.phone_e164` and in `alumni_data.whatsapp`.
 
+## Input model: country selector + national number
+
+Users pick a country (default **Indonesia**) and type the number *without* the
+country code:
+
+```
+[ 🇮🇩 +62 ▾ ]  [ 812 3456 7890        ]
+```
+
+This removes the ambiguity at the source rather than inferring it afterwards. A
+number pasted in full international form (`+1 415 555 0123`) still parses, and
+**the explicit country code wins over the selector** — so a paste is never
+silently re-homed to the wrong country.
+
+`normalizePhone(input, country)` takes the selected country as its second
+argument, defaulting to `'ID'`.
+
 ## Algorithm
 
 `server/src/lib/phone.js`, one exported function:
@@ -35,37 +52,65 @@ Stored in `users.phone_e164` and in `alumni_data.whatsapp`.
 normalizePhone(input) -> string        // throws PhoneError on invalid
 ```
 
+```
+normalizePhone(input, country = 'ID') -> string   // throws PhoneError
+tryNormalizePhone(input, country)      -> {ok:true,value} | {ok:false,reason}
+countryOptions()                       -> [{code, dialCode}, …]
+```
+
 Steps, in order:
 
-1. Reject non-string / empty → `PhoneError('empty')`.
-2. Strip everything except digits and a leading `+`.
-   Kills spaces, `-`, `(`, `)`, `.`, and non-breaking spaces (real hazard —
-   they arrive via copy-paste from WhatsApp and Excel).
-3. Resolve the country code, longest-prefix first — **order matters**:
+1. Reject non-string / empty → `PhoneError('empty')`; reject digit-free input →
+   `no-digits`.
+2. **Convert a leading `00` to `+`.** Must happen before parsing — see the
+   library caveat below.
+3. Reject an unknown country code → `unknown-country`.
+4. Parse with `libphonenumber-js/max`, passing the selected country as the
+   default region. Unparseable → `unrecognized-format`.
+5. `isValid()` → else `invalid-number`. This subsumes the hand-rolled
+   length and prefix checks, per country, from real metadata.
+6. **Type check:** accept `MOBILE` and `FIXED_LINE_OR_MOBILE`; reject a definite
+   `FIXED_LINE` → `not-mobile`. The field is *WhatsApp*.
+   `FIXED_LINE_OR_MOBILE` **must** be accepted — many countries (the US among
+   them) cannot distinguish, and rejecting it would lock out every US alumnus.
+   Trade-off: WhatsApp Business can run on a landline, so this rejects a small
+   class of valid numbers. The failure is visible and user-reported, which is why
+   it is the safer direction to err in.
+7. Return `parsed.number` — always E.164.
 
-   | Input starts with | Action | Rationale |
-   |---|---|---|
-   | `+62` | strip `+` | already E.164 |
-   | `62` | keep as-is | country code without `+` |
-   | `0` | replace leading `0` with `62` | Indonesian trunk prefix |
-   | `8` | prepend `62` | trunk prefix omitted; mobile numbers start `8` |
-   | `+` other | keep digits | non-Indonesian; alumni live abroad |
-   | else | `PhoneError('unrecognized-format')` | |
+`tryNormalizePhone` is the non-throwing variant, used by the backfill (where a
+failure is a row to record, not an exception) and by form validation.
 
-   The `0`-before-`8` ordering matters: `08123…` must hit the trunk-prefix rule.
-   The bare-`8` rule is last so it only catches numbers that skipped the prefix.
+### Reversed: `libphonenumber-js` is now used
 
-4. Length check: 8–15 digits total (E.164 max is 15). Outside → `PhoneError`.
-5. Indonesian sanity check: if it starts `62`, the next digit must be `8`.
-   `62` followed by anything else is a landline or a typo, not a mobile — and
-   the field is *WhatsApp*. → `PhoneError('not-mobile')`.
-6. Return `'+' + digits`.
+**This spec originally argued against it** — ~150KB of per-country metadata for
+a ~30-line, single-country rule set, with the note "revisit if international
+alumni become a significant cohort." That condition was met: alumni live abroad,
+and the UI now offers a country selector, so the hand-rolled Indonesian rules are
+no longer sufficient.
+
+Implemented in `server/src/lib/phone.js` against the **`libphonenumber-js/max`**
+entrypoint, not the default. Two reasons, both found by probing rather than
+assumed:
+
+- The default (`min`) metadata **cannot report number type**, so it cannot tell
+  a mobile from a landline. `getType()` returns undefined for every number.
+- `min` wrongly reported `006281234567890` as **valid**, parsing it to
+  `+62006281234567890`. `max` correctly rejects it.
+
+Server-side the extra bytes are irrelevant. The frontend is a separate decision —
+see [08](./08-ux-redesign.md#registration--daftar).
+
+#### One thing the library gets wrong
+
+`libphonenumber` does **not** strip the `00` international dial-out prefix when a
+default country is supplied — it treats the digits as national and produces
+`+62006281234567890`. `normalizePhone` converts a leading `00` to `+` before
+parsing, so `0062...` pastes work rather than merely being rejected. There is a
+regression test for this.
 
 ### Deliberate non-goals
 
-- **No `libphonenumber-js`.** ~150KB and a per-country metadata database, for a
-  rule set that is ~30 lines and one country. Revisit if international alumni
-  become a significant cohort and per-country validation starts mattering.
 - **No carrier or reachability check.** That is OTP's job, and OTP was
   explicitly ruled out.
 
