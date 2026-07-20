@@ -52,19 +52,29 @@ Postgres is on a different host from the app server. Two consequences:
 
 ## Repo layout
 
-Monorepo, npm workspaces. Frontend stays where it is so its git history and
-import paths survive.
+Two package manifests, root (frontend) and `server/`, each with its own
+`node_modules`. Frontend stays where it is so its git history and import paths
+survive.
+
+**Not npm workspaces**, which this spec originally called for. Workspaces hoist
+dependencies into a shared root `node_modules`, and the frontend install already
+exists and is about to be rewritten -- reshuffling it mid-migration risks
+breaking the build for no benefit at this size. Root scripts delegate with
+`npm --prefix server`. Revisit if a third package appears.
 
 ```
 iaku-db/
-├── package.json          # workspace root; scripts delegate
+├── package.json          # frontend; scripts delegate to server/ via --prefix
 ├── src/                  # UNCHANGED LOCATION — React app
 ├── server/
 │   ├── package.json
 │   ├── prisma/
 │   │   └── schema.prisma
+│   ├── scripts/
+│   │   └── create-admin.js   # seeds the first ADMIN (no public signup)
 │   └── src/
-│       ├── index.js          # express bootstrap
+│       ├── index.js          # listener + graceful shutdown
+│       ├── app.js            # express app factory (importable by tests)
 │       ├── env.js            # validated env, fails fast
 │       ├── prisma.js         # singleton PrismaClient
 │       ├── middleware/
@@ -74,7 +84,8 @@ iaku-db/
 │       ├── routes/
 │       │   ├── auth.js
 │       │   ├── alumni.js
-│       │   └── stats.js
+│       │   ├── stats.js
+│       │   └── meta.js       # country list, broker contact number
 │       └── lib/
 │           ├── phone.js      # normalisation — see 03
 │           └── mask.js       # server-side masking — see 07
@@ -117,8 +128,9 @@ prod with no environment branching in application code:
 server: { proxy: { '/api': 'http://localhost:3000' } }
 ```
 
-Root scripts: `npm run dev` runs client and server concurrently; `npm run
-build` builds the client. Schema sync is a deliberate manual step: `npm run db:push` from `server/` (see 02).
+Root scripts: `npm run dev` runs client and server concurrently (via
+`concurrently`); `npm run install:all` installs both; `npm test` runs the server
+suite; `npm run build` builds the client. Schema sync is a deliberate manual step: `npm run db:push` from `server/` (see 02).
 
 ## What is deliberately NOT in scope
 

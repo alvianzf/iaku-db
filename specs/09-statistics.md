@@ -116,7 +116,29 @@ Per the interaction rules, an HTML chart ships hover by default:
 `chartjs-plugin-datalabels` is already installed and is what draws the direct
 labels. Keep `chart.js`; it does everything above and is already a dependency.
 
-## Database changes
+## Implementation note: no materialized view
+
+**The view below was not built.** It assumed `prisma migrate`; with `db push`
+([02](./02-database.md#schema-management-db-push-not-migrations)) there is no
+migration file to carry the `CREATE MATERIALIZED VIEW`, and Prisma does not
+model views — so it would mean a hand-applied SQL file that nothing keeps in
+sync with the schema, and a `REFRESH` that silently fails if the view was never
+created.
+
+`GET /api/stats` instead computes the same six categories with Prisma `groupBy`,
+cached in-process for an hour and invalidated by `refreshStats()` on every alumni
+create/update/delete. The API contract is unchanged: still
+`{category, value, count}`, still sorted by count descending.
+
+Cost: six queries on a cold cache instead of one view read. Acceptable because
+the figures only move on a write, and both write paths invalidate. If the table
+grows enough that a cold cache is slow, revisit the view — the SQL below is kept
+for that.
+
+The `angkatan` note still applies: `value` is serialised as a **string** for a
+uniform shape across categories, so the client must sort it numerically.
+
+## Database changes (not applied — see above)
 
 The `alumni_stats` materialized view ([02](./02-database.md)) currently emits
 three categories. Add three:

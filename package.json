@@ -4,10 +4,16 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
+    "dev": "concurrently -n web,api -c cyan,magenta \"vite\" \"npm --prefix server run dev\"",
+    "dev:web": "vite",
+    "dev:api": "npm --prefix server run dev",
     "build": "vite build",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "test": "npm --prefix server test",
+    "install:all": "npm install && npm --prefix server install",
+    "db:push": "npm --prefix server run db:push",
+    "db:pull": "npm --prefix server run db:pull"
   },
   "dependencies": {
     "@emotion/react": "^11.14.0",
@@ -34,6 +40,7 @@
     "@types/react-dom": "^19.1.2",
     "@vitejs/plugin-react": "^4.4.1",
     "autoprefixer": "^10.4.21",
+    "concurrently": "^10.0.3",
     "eslint": "^9.25.0",
     "eslint-plugin-react-hooks": "^5.2.0",
     "eslint-plugin-react-refresh": "^0.4.19",
